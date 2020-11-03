@@ -23,8 +23,13 @@ int main()
     DblLinkedList *list;
     list = createDblLinkedList();
     int SIZE = 100;
-    initListByRand(list, SIZE);
+    //initListByRand(list, SIZE);
     printDblLinkedList(list, printInt);
+
+    pushFront(list,1);
+    pushFront(list,1);
+    pushFront(list,1);
+    pushFront(list,1);
 
     pthread_mutex_t mutex;
 
@@ -86,39 +91,48 @@ int countOfBit(int element, int numberOfThread) {
 
 void *find(void *args)
 {
+    int value=0;
+    int a=0;
     someArgs_t *arg=(someArgs_t *) args;
     
     while (1)
     {
-        if (arg->list->size > 0)
+        switch (arg->numberOfThread)
         {
-            switch (arg->numberOfThread)
+        case 0:
+            pthread_mutex_lock(arg->mutex);
+            if(arg->list->head)
             {
-            case 0:
-                if (arg->list->head)
-                {
-                    arg->bitCounter += countOfBit(arg->list->head->value, arg->numberOfThread);
-                    pthread_mutex_lock(arg->mutex);
-                    popFront(arg->list);
-                    arg->deleteByTh++;
-                    pthread_mutex_unlock(arg->mutex);
-
-                }
-                break;
-
-            case 1:
-                if (arg->list->tail)
-                {
-                    arg->bitCounter += countOfBit(arg->list->tail->value, arg->numberOfThread);
-                    pthread_mutex_lock(arg->mutex);
-                    popBack(arg->list);
-                    arg->deleteByTh++;
-                    pthread_mutex_unlock(arg->mutex);
-                }
+                a=popFront(arg->list);
+            }
+            else
+            {
+                pthread_mutex_unlock(arg->mutex);
                 break;
             }
+            pthread_mutex_unlock(arg->mutex);
+            value = countOfBit(a, arg->numberOfThread);
+            arg->bitCounter+=value;
+            arg->deleteByTh++;
+            break;
+
+        case 1:
+            pthread_mutex_lock(arg->mutex);
+            if(arg->list->tail)
+            {
+                a=popBack(arg->list);
+            }
+            else
+            {
+                pthread_mutex_unlock(arg->mutex);
+                break;
+            }
+            pthread_mutex_unlock(arg->mutex);
+            value = countOfBit(a, arg->numberOfThread);
+            arg->bitCounter+=value;
+            arg->deleteByTh++;
+            break;
         }
-        sleep(1e-6);
 
         if (arg->list->size == 0)
             return NULL;
